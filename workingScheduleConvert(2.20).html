@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <input type="file" id="excelInput" accept=".xlsx, .xls">
+  <div id="output"></div>
+</body>
+
+</html>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+<script>
+  // 导入xlsx库
+  // const XLSX = require('./node_modules/xlsx')
+  // 获取input元素和输出元素
+  const excelInput = document.getElementById('excelInput')
+  const output = document.getElementById('output')
+  // 为input元素添加change事件监听器
+  excelInput.addEventListener('change', function (event) {
+    // 获取文件对象
+    const file = event.target.files[0]
+    // 创建一个FileReader对象
+    const reader = new FileReader()
+
+    // 当文件读取完成后触发load事件
+    reader.onload = function (event) {
+      const data = new Uint8Array(event.target.result)
+      const workbook = XLSX.read(data, { type: 'array' })
+      // 获取第一个工作表
+      const sheet_name_list = workbook.SheetNames
+      // console.log(workbook.Sheets[sheet_name_list])
+      const worksheet = workbook.Sheets[sheet_name_list[0]]
+      // 将工作表转换为JSON格式
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: 0 })
+      // console.log('jsonData', jsonData)
+
+      let nameList = [...Object.keys(jsonData[0])]
+      let ArrayList = nameList.map(item => item = [])
+      jsonData.forEach(item => {
+        const name = Object.keys(item)
+        const value = Object.values(item)
+        name.forEach((item, index) => {
+          ArrayList[index].push(value[index])
+        })
+      }
+      )
+
+
+
+      const newArr = ArrayList.map(item => item.map((item, index) => {
+        let result = item.toString().split(" ").filter(item => item != '')
+        if (result.length < 2 && index < 2) {
+          result = [...result, 0]
+        }
+        if (result.length < 2 && (index === 8 || index === 9 || index === 13 || index === 14 || index === 15 || index === 7)) {
+          result = [...result, 0]
+        }
+        const newRes = result.map(item1 => {
+          let result = Number(item1)
+          switch (item1) {
+            case '0':
+              result = 0
+              break
+            case '月轩':
+              result = 1
+              break
+            case '郭甜':
+              result = 2
+              break
+            case '吴胤':
+              result = 3
+              break
+            case '程斌':
+              result = 4
+              break
+            case '泽敏':
+              result = 5
+              break
+            case '文艳':
+              result = 6
+              break
+            case '池倩':
+              result = 7
+              break
+            case '刘婧':
+              result = 8
+              break
+            case '琳宇':
+              result = 9
+              break
+            case '胡亥':
+              result = 10
+              break
+            case '爱静':
+              result = 11
+              break
+            case '王欢':
+              result = 12
+              break
+            default:
+              break
+          }
+          return result
+        })
+        return newRes
+      }))
+      const formatting = newArr.map(item => {
+        let newItem = []
+        item.forEach(item2 => {
+          newItem = [...newItem, ...item2]
+        })
+        return newItem
+      })
+      let res = []
+      const formated = formatting.reduce((pre, cur, index) => {
+        // console.log(pre, cur, index % 2)
+        let newArr = []
+        if (index % 2) {
+          newArr = cur
+        } else {
+          cur.splice(0, 8)
+          console.log('res', [...pre, ...cur])
+          res.push([...pre, ...cur])
+        }
+        return newArr
+      })
+      console.log(newArr, formatting, formated)
+      const ws = XLSX.utils.aoa_to_sheet(res)
+      console.log(ws)
+      // 创建一个新的工作簿并添加工作表  
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, 'Sheet1')
+
+      // 将工作簿转换为blob对象  
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+
+      // 创建一个blob URL  
+      const blob = new Blob([wbout], { type: 'application/octet-stream' })
+      const url = URL.createObjectURL(blob)
+
+      // 创建一个下载链接并模拟点击下载  
+      const downloadLink = document.createElement('a')
+      downloadLink.href = url
+      downloadLink.download = 'output.xlsx'
+      document.body.appendChild(downloadLink)
+      downloadLink.click()
+      document.body.removeChild(downloadLink)
+      // 显示数据
+      output.innerHTML = JSON.stringify(res, null, 2)
+    }
+    // 以二进制格式读取文件内容
+    reader.readAsArrayBuffer(file)
+  });
+</script>
